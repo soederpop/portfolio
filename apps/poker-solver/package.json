@@ -12,7 +12,8 @@
     "build:lib": "BUILD_ENV=build babel -d lib server",
     "play": "BUILD_ENV=build skypager play --dev --babel",
     "build:webapp": "BUILD_ENV=build-web skypager build",
-    "dev": "NODE_ENV=development skypager serve --hot --open"
+    "dev": "NODE_ENV=development skypager serve --hot --open",
+    "test": "skypager test --mocha"
   },
   "bin": {
     "pokurr": "./pokurr.js"
