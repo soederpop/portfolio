@@ -23,47 +23,109 @@ export const SKLANKSY_RANGES = {
   '7': '44,J9o,64s,T9o,53s,33,98o,43s,22,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s',
   '8': '87,A9o,Q9o,76o,42s,32s,96s,85s,J8o,J7s,65o,54o,74s,K9o,T8o' 
 }
+/** 
+ * @typedef {Object} ComboFilter
+ * @property {String} item the individual hand component of a range notation that we're filtering for
+ * @property {Number} rank the rank value of the highest card of the two cards
+ * @property {Number} kicker the rank value of the lower card of the two cards
+ * @property {Boolean} pair both ranks match (e.g. AA)
+ * @property {Boolean} suited whether both suits match (e.g. 87s)
+ * @property {Boolean} offsuit whether both suits are different (e.g 87)
+ * @property {Boolean} connected when the rank and kicker are connected, (e.g. 87o,87s) 
+ * @property {Boolean} oneGap when the rank and kicker are one apart, (e.g. 86o,86s) 
+ * @property {Boolean} twoGap when the rank and kicker are two apart, (e.g. 85o,85s) 
+ * @property {Boolean} threeGap the rank and kicker are three apart, (e.g. 84o,84s) 
+ * @property {Boolean} greater whether the range is meant to include all ranks above it 
+ * @property {Boolean} weaker whether range is meant to include all ranks below it 
+ * @property {Boolean} ranged if the filter is meant to be inclusive of hands within a range (e.g 22-JJ)
+ * @property {ComboFilter} top in a ranged combo filter, represents the top of the range
+ * @property {ComboFilter} bottom in a ranged combo filter, represents the bottom of the range
+*/
 
-export function generateCombos(count, deadCards = []) {
-  const generator = combination(Range.cards.map(c => c.name), count);
+/** 
+ * @typedef {Object} Card
+ * @property {Number} suit
+ * @property {Number} rank 
+*/
 
-  const combos = [];
-  let a;
+/** 
+ * @typedef {String} CardName two character representation of a card e.g. Ah (ace of hearts)
+*/
 
-  while ((a = generator.next())) {
-    combos.push(a);
-  }
+/** 
+ * @typedef {String} ComboName four character representation of a card combo e.g. AhKh (ace of hearts, king of hearts)
+*/
 
-  return combos.filter(combo => !deadCards.find(i => combo.indexOf(i) > -1));
-}
+/** 
+ * @typedef {String} NormalizedComboName normalized representation of a card combo e.g. AhKh (ace of hearts, king of hearts) becomes AKs (Ace King suited)
+*/
 
-function sklansky(groupNumber, deadCards = []) {
-  return new Range(SKLANKSY_RANGES[String(groupNumber)], deadCards);
-}
+/** 
+ * @typedef {Array<Card>} StartingHandCombination 
+ * @property {String} name the two cards in the combination, highest rank first (e.g AhKd) 
+ * @property {String} normalized the normalized representation (e.g AKo)
+ * @property {Number} rank the value of the highest card
+ * @property {Number} kicker the rank value of the lower card of the two cards
+ * @property {Boolean} pair both ranks match (e.g. AA)
+ * @property {Boolean} suited whether both suits match (e.g. 87s)
+ * @property {Boolean} offsuit whether both suits are different (e.g 87)
+ * @property {Boolean} connected when the rank and kicker are connected, (e.g. 87o,87s) 
+ * @property {Boolean} oneGap when the rank and kicker are one apart, (e.g. 86o,86s) 
+ * @property {Boolean} twoGap when the rank and kicker are two apart, (e.g. 85o,85s) 
+ * @property {Boolean} threeGap the rank and kicker are three apart, (e.g. 84o,84s) * 
+ * @property {Function} has whether the combo contains the selected card name
+ * @property {Function} toJSON conver the combo to a serialized object
+ * @property {Function} cardGroup returns a card group object suitable for use with poker-tools OddsCalculator 
+ * @property {Array<Number>} strengthVsOpponents an array of probabilities this combo is the best hand vs a number of opponents, starting with one up to 8 (for a 9 handed game)
+ * @property {Number} vsOnePlayer the strength vs one opponent
+ * @property {Number} vsThreePlayers the strength vs two opponents
+ * @property {Number} vsTwoPlayers the strength vs three opponents
+ * @property {Number} showdown a numerical representation of the hands strength if it never improves. 
+*/
 
+/** 
+ * @typedef {Object} RangeInfo
+ * @property {String} input
+ * @property {Number} minShowdown 
+ * @property {Number} maxShowdown 
+ * @property {Number} strength 
+ * @property {Number} percentile 
+ * @property {Array<StartingHandCombination>} combos
+ * @property {Object<Number,Number>} strengthDistribution
+*/
+
+/** 
+ * @typedef {Object} RangeComparisonResults
+ * @property {String} us our range's input
+ * @property {String} them the range's input we are comparing against
+ * @property {Number} ourWins how many times our range wins
+ * @property {Number} theirWins how many times their range wins
+ * @property {Number} tie how often they tie
+ * @property {Object} numbers the numbers of each matchup that were used in the averages
+*/
+
+/** 
+ * The Range class represents a selection of starting poker hands,
+ * which are combinations of two cards with different ranks and suits.
+*/
 export default class Range {
-  static async compareSklanskyRanges(options = {}) {
-    const matchups = combination(['ultraStrong', 'strong', 'medium', 'loose'], 2)
-    for(let matchup of matchups) {
-      const [i1, i2] = matchup
-      await Range.sklansky[i1].compare(Range.sklansky[i2], options)
-    }
-  }
 
-  static sklansky = Object.assign(sklansky, {
-    get ultraStrong() { return sklansky(1) },
-    get strong() { return new Range(`${sklansky(1).input},${sklansky(2).input}`) },
-    get medium() { return new Range(`${sklansky(1).input},${sklansky(2).input},${sklansky(3).input},${sklansky(4).input},${sklansky(5).input}`) },
-    get loose() { return new Range(`${sklansky(1).input},${sklansky(2).input},${sklansky(3).input},${sklansky(4).input},${sklansky(5).input},${sklansky(6).input},${sklansky(7).input} `) },
-  })
-
+  /** 
+   * @param {String} rangeInput the written hand range notation
+   * @param {Array<CardName>} [deadCards=[]] cards which are known to be dead, so not to be included in the range. 
+  */
   constructor(rangeInput = '', deadCards = []) {
     this.deadCards = deadCards 
     this.input = rangeInput
   }
 
+  /** 
+   * View the range as a serializable object.
+   * @returns {RangeInfo}
+  */
   toJSON() {
     return {
+      input: this.input,
       maxShowdown: this.maxShowdown,
       minShowdown: this.minShowdown,
       percentile: this.percentile,
@@ -71,66 +133,131 @@ export default class Range {
       size: this.size,
       strengthDistribution: this.strengthDistribution,
       combos: this.combos.map(combo => combo.toJSON()),
-
     }
   }
 
+  /** 
+   * A distribution of the starting hands showdown value.
+   * @type {Object<Number,Number>}
+  */
   get strengthDistribution() {
     const { groupBy, mapValues } = lodash
     return mapValues(groupBy(this.combos, 'showdown'), 'length')
   }
 
+  /** 
+   * the maximum showdown value in the range of combinations 
+   * @type {Number}
+  */
   get maxShowdown() {
     return max(this.combos.map(c => c.showdown))
   }
 
+  /** 
+   * the maximum showdown value in the range of combinations 
+   * @type {Number}
+  */
   get minShowdown() {
     return min(this.combos.map(c => c.showdown))
   }
 
+  /** 
+   * Which percent of the total possible hands are represented in this range
+   * @type {Number}
+  */
   get percentile() {
     return (this.size / this.constructor.combos.length) * 100
   }
 
+  /** 
+   * Which percent of the total possible hands are represented in this range
+   * @type {Number}
+  */
   get strength() {
     return (this.size / this.constructor.combos.length) * 100
   }
 
+  /** 
+   * How many combinations of starting hands are in this range?
+   * 
+   * There are 4 ways of making any suited combination (AKs)
+   * There are 16 ways of making any combination of two cards
+   * There are 6 ways of making a pair
+   * 
+   * So given 22-33, there would be a total of 18 combinations out of the possible 1326
+   * 
+  */
   get size() {
     return this.combos.length
   }
 
+  /** 
+   * The indiviaul combinations that make up this hand range.
+   * 
+   * @type {Array<StartingHandCombination>}
+  */
   get combos() {
     const notDead = (comboName) => !this.deadCards.find(card => comboName.indexOf(card) >= 0)
     return Range.filterCombos(this.input).filter(combo => notDead(combo.name))
   }
 
+  /** 
+   * @type {Object<CardName, Card>}
+  */
   static get cardsMap() {
     return Range.chain.get('cards').keyBy('name').value()
   }
-  
+
+  /** 
+   * @type {Object<CardName, Card>}
+  */ 
   get cardsMap() {
     return Range.chain.get('cards').keyBy('name').value()
   }
 
+  /** 
+   * @type {Array<ComboName>}
+  */
   get comboNames() {
     return this.combos.map(c => c.name)
   }
 
+  /** 
+   * Returns all of the combinations grouped by their normalized representation.
+   * 
+   * @type {Object<NormalizedComboName, Array<StartingHandCombination>}
+  */
   get normalizedCombos() {
     return this.chain.get('combos')
       .groupBy('normalized')
       .value()
   }
 
+  /** 
+   * @type {Array<NormalizedComboName>}
+  */
   get normalizedComboNames() {
     return Object.keys(this.normalizedCombos)
   }
 
+  /** 
+   * An md5 hash of all the combos in this range.
+   * 
+   * @type {String}
+  */
   get hash() {
     return runtime.hashObject(this.comboNames)
   }
 
+  /** 
+   * Compare one range vs another using an expensive, montecarlo simulation of possible matchups between the two ranges.
+   * This method will be cached using a file system based cache so that once we compare one range vs another, the result will
+   * be remembered for future calculations.
+   * 
+   * @param {Range} range the range we want to compare our equity to
+   * @param {Object} options options that get passed to createCalculators
+   * @return {Promise<RangeComparisonResults>}
+  */
   async compare(range, options) {
     const results = await this.createCalculators(range, options).run()
 
@@ -171,6 +298,9 @@ export default class Range {
     } 
   }
   
+  /** 
+   * Creates equity calculators for comparing one range to another.
+  */
   createCalculators(anotherRange, { reduce = true, board = '', iterations = 50000 } = {}) {
     // need to exclude cards which are on the board
     const matchups = Object.values(this.generateMatchups(anotherRange, { reduce, board }))
@@ -775,7 +905,12 @@ export default class Range {
     return riversMap 
   }  
 
-
+  /** 
+   * Filter the possible starting hand notations. 
+   * 
+   * @param {Function|String|Array<ComboFilter>|ComboFilter} filters a single ComboFilter, an array of ComboFilters, or a string to be turned into one or more ComboFilter
+   * @returns {Array<StartingHandCombination>}
+  */
   static filterCombos(filters) {
     if (isFunction(filters)) {
       return Range.chain.get('combos').filter(filters).value()
@@ -790,12 +925,23 @@ export default class Range {
     }
   }
 
+  /** 
+   * @param {String} input a written hand range notation, as found in popular poker literature. (e.g. 22+,ATs+,KJs+,JQs+) 
+   * @returns {Range}
+  */
   static fromString(input = '') {
     const filters = this.parseRange(input)
     const results = this.filterCombos(filters)
     return results
   }
   
+  /** 
+   * Given a single range value (e.g one in a comma separated list AKo,AJs+)
+   * turn it into a CombinationFilter which can be used to match the combination.
+   * 
+   * @param {String} str a single hand range component
+   * @returns {ComboFilter}
+  */
   static expandHand(str) {
     const parts = str.split("");
     const [rankOne, rankTwo, ...modifiers] = parts;
@@ -840,12 +986,13 @@ export default class Range {
     };
   }
 
-  static possibleOpponentCombos(heroHand, numberOfOpponents = 8, slice = 0) {
-    const allCards = Range.cardNames 
-    const combos = bigCombination(allCards, numberOfOpponents * 2)
-    return combos.length
-  } 
-
+  /** 
+   * Turn a range notation into an object which can be used to filter the starting hand
+   * combinations and return them all.
+   * 
+   * @param {String} input the range notation as written in popular poker literature
+   * @returns {ComboFilter}
+  */
   static parseRange(input = '') {
     const items = String(input).trim().split(',').map(s => s.trim())
     return items.map(str => {
@@ -863,6 +1010,30 @@ export default class Range {
       }
     })
   }
+
+  /** 
+   * Run the range comparison function for all of the sklansky ranges.
+   * 
+   * Doing this once will seed the equity calculator cache with a lot of values, and make
+   * subsequent comparisons go a lot fastter.
+  */
+  static async compareSklanskyRanges(options = {}) {
+    const matchups = combination(['ultraStrong', 'strong', 'medium', 'loose'], 2)
+    for(let matchup of matchups) {
+      const [i1, i2] = matchup
+      await Range.sklansky[i1].compare(Range.sklansky[i2], options)
+    }
+  }
+
+  /** 
+   * This is a shortcut to the different hand ranges defined by author David Sklansky.
+  */
+  static sklansky = Object.assign(sklansky, {
+    get ultraStrong() { return sklansky(1) },
+    get strong() { return new Range(`${sklansky(1).input},${sklansky(2).input}`) },
+    get medium() { return new Range(`${sklansky(1).input},${sklansky(2).input},${sklansky(3).input},${sklansky(4).input},${sklansky(5).input}`) },
+    get loose() { return new Range(`${sklansky(1).input},${sklansky(2).input},${sklansky(3).input},${sklansky(4).input},${sklansky(5).input},${sklansky(6).input},${sklansky(7).input} `) },
+  })
 
   static generateCombos = generateCombos
   static groups = groups
@@ -1037,3 +1208,23 @@ function isBlocked(comboOne, ...combos) {
 }
 
 Range.isBlocked = isBlocked
+
+
+export function generateCombos(count, deadCards = []) {
+  const generator = combination(Range.cards.map(c => c.name), count);
+
+  const combos = [];
+  let a;
+
+  while ((a = generator.next())) {
+    combos.push(a);
+  }
+
+  return combos.filter(combo => !deadCards.find(i => combo.indexOf(i) > -1));
+}
+
+function sklansky(groupNumber, deadCards = []) {
+  return new Range(SKLANKSY_RANGES[String(groupNumber)], deadCards);
+}
+
+

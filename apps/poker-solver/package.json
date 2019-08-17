@@ -4,10 +4,12 @@
   "description": "a tool for poker simulation and analysis",
   "main": "index.js",
   "scripts": {
-    "console": "skypager console",
+    "console": "NODE_ENV=development skypager console",
     "start": "skypager serve",
-    "start:dev": "skypager serve --dev",
-    "build": "BUILD_ENV=build babel -d lib server",
+    "start:dev": "NODE_ENV=development skypager serve",
+    "build": "yarn build:client && yarn build:lib",
+    "build:client": "BUILD_ENV=build babel -d lib src/client.js",
+    "build:lib": "BUILD_ENV=build babel -d lib server",
     "play": "BUILD_ENV=build skypager play --dev --babel",
     "build:webapp": "BUILD_ENV=build-web skypager build",
     "dev": "NODE_ENV=development skypager serve --hot --open"
