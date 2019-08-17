@@ -1,0 +1,10 @@
+{
+  "name": "@soederpop/websites-example-one",
+  "private": true,
+  "version": "0.0.1",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://sf-example-one.soederpop.com",
+  "skypager": {
+    "framework": "startup"
+  }
+}

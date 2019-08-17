@@ -1,0 +1,60 @@
+{
+  "name": "@soederpop/skypager-composer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettify": "prettier --write src/**/*.js",
+    "build:webapp": "skypager build --app-only --no-minify-html",
+    "build:lib": "cross-env BABEL_ENV=build babel -d lib src",
+    "build": "yarn build:webapp && yarn build:lib",
+    "start": "skypager serve",
+    "dev": "skypager start-dev-server --dev --babel"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "skypager": {
+    "buildFolder": "lib",
+    "projectType": "webapp",
+    "webpacks": {
+      "build": "webpack.config.js",
+      "start": "webpack.config.js"
+    }
+  },
+  "dependencies": {
+    "@skypager/cli": "^1.2.0",
+    "@skypager/features-browser-vm": "^1.1.1",
+    "@skypager/google": "^1.2.4",
+    "@skypager/helpers-document": "^1.1.5",
+    "@skypager/helpers-google-doc": "^1.2.4",
+    "@skypager/helpers-mdx": "^1.1.1",
+    "@skypager/helpers-sheet": "^1.2.4",
+    "@skypager/node": "^1.1.5",
+    "html2jsx": "^0.1.0",
+    "react-dnd": "^9.3.2"
+  },
+  "devDependencies": {
+    "@skypager/web": "^1.1.4",
+    "@skypager/webpack": "^1.1.5",
+    "cross-env": "^5.2.0",
+    "babel-plugin-require-context-hook": "^1.0.0",
+    "node-sass": "^4.12.0",
+    "puppeteer": "^1.18.1",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-router-dom": "^5.0.1",
+    "request-promise": "^4.2.4"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "workspaces": [
+    "src/sites/*"
+  ],
+  "contributors": []
+}

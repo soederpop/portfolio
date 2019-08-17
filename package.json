@@ -1,0 +1,25 @@
+{
+    "name": "@soederpop/portfolio",
+    "homepage": "https://www.soederpop.com",
+    "version": "0.0.1",
+    "private": true,
+    "resolutions": {
+        "@babel/core": "7.2.2"
+    },
+    "scripts": {
+      "postinstall": "skypager link-dev-dependencies"
+    },
+    "workspaces": [
+        "apps/*"
+    ],
+    "skypager": {
+        "projectType": "portfolio"
+    },
+    "devDependencies": {
+        "babel-plugin-transform-dynamic-import": "^2.1.0",
+        "chai": "^4.2.0",
+        "mocha": "^6.2.0",
+        "sinon": "^7.3.2",
+        "sinon-chai": "^3.3.0"
+    }
+}

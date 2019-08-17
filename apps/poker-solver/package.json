@@ -1,0 +1,40 @@
+{
+  "name": "@soederpop/poker-solver",
+  "version": "1.0.0",
+  "description": "### Can convert range annotations",
+  "main": "index.js",
+  "scripts": {
+    "build": "BUILD_ENV=build babel -d lib server",
+    "play": "BUILD_ENV=build skypager play --dev --babel",
+    "build:webapp": "BUILD_ENV=build-web skypager build",
+    "dev:webapp": "BUILD_ENV=build-web skypager start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "skypager": {
+    "webpacks": {
+      "build": "webpack.config.js",
+      "start": "webpack.config.js"
+    }
+  },
+  "dependencies": {
+    "poker-tools": "^1.3.10",
+    "tx-holdem": "^1.0.0",
+    "worker-farm": "^1.7.0",
+    "@skypager/features-file-db": "^1.1.1",
+    "js-combinatorics": "^0.5.4"
+  },
+  "devDependencies": {
+    "@skypager/webpack": "^1.1.5",
+    "@skypager/devtools": "^1.3.0",
+    "skypager": "^40.1.16"
+  },
+  "contributors": [],
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

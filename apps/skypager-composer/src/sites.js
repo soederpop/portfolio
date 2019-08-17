@@ -1,0 +1,1 @@
+export default require.context('./sites', true, /index\.js$/)

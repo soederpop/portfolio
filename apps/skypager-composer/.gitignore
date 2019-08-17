@@ -1,0 +1,14 @@
+node_modules/
+downloads/
+*.log
+dist/
+secrets/
+lib/
+*.php
+.DS_Store
+src/blocks/*
+blocks/*
+public/i
+public/css
+public/js
+public/video

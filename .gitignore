@@ -1,0 +1,9 @@
+node_modules/
+secrets/
+apps/**/node_modules
+apps/**/secrets
+apps/**/.npmrc
+.env
+.env*
+*.log
+.DS_Store
