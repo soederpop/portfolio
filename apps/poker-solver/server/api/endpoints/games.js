@@ -4,13 +4,13 @@ export default async function setupGamesEndpoints(app) {
   gamesMap = this.runtime.gamesMap = this.runtime.gamesMap || gamesMap
   
   app
-    .route('/games')
+    .route('/api/games')
     .all(gamesRequestHandler.bind(this))
     .get(listGames.bind(this))
     .post(createGame.bind(this))
 
   app
-    .route('/games/:gameId')
+    .route('/api/games/:gameId')
     .all(gameRequestHandler.bind(this))
     .get(getGame.bind(this))
     .post(sendGameAction.bind(this))

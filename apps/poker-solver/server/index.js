@@ -53,5 +53,9 @@ export function attach(runtime) {
   endpoints.resolve = (k) => k
   runtime.endpoints.add(endpoints)
 
-  require('../src/client')
+  if (runtime.isDevelopment) {
+    require('../src/client')
+  } else {
+    require('../lib/client')
+  }
 }

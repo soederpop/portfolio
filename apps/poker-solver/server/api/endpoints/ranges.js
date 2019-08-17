@@ -2,13 +2,13 @@ export default async function setupRangesEndpoint(app) {
   const { runtime } = this
   const { Range } = runtime
 
-  app.get('/ranges/grid', (req, res) => {
+  app.get('/api/ranges/grid', (req, res) => {
     const grid = Range.asGrid()
     const combos = Range.combos.map(combo => combo.toJSON())
     res.json({ grid, combos })
   })
 
-  app.get('/ranges/flops', (req, res) => {
+  app.get('/api/ranges/flops', (req, res) => {
     const flops = Range.chains.flops
     const { isNaN } = runtime.lodash
     const filters = runtime

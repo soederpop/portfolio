@@ -6,7 +6,6 @@ import GamePage from './pages/GamePage'
 import GamesPage from './pages/GamesPage'
 import RangesPage from './pages/RangesPage'
 import api from './client'
-import workspace from './features/workspace'
 import RangeCalculator from './components/RangeCalculator'
 import FlopBrowser from './components/FlopBrowser'
 
@@ -37,14 +36,15 @@ export class App extends Component {
     return { 
       runtime: this.props.runtime,
       api,
-      workspace: workspace
+      workspace: this.props.runtime.workspace
     }
   }
 
   toggleFlopBrowser = () => {
     const { activeTool } = this.state
+    const { runtime } = this.props
 
-    const showDrawer = () => { workspace.toggleDrawer('right', !!this.state.activeTool) }
+    const showDrawer = () => { runtime.workspace.toggleDrawer('right', !!this.state.activeTool) }
 
     if (activeTool !== 'flopBrowser') {
       this.setState({ activeTool: 'flopBrowser' }, showDrawer)
@@ -55,8 +55,9 @@ export class App extends Component {
 
   toggleRangeCalculator = () => {
     const { activeTool } = this.state
+    const { runtime } = this.props
 
-    const showDrawer = () => { workspace.toggleDrawer('right', !!this.state.activeTool) }
+    const showDrawer = () => { runtime.workspace.toggleDrawer('right', !!this.state.activeTool) }
 
     if (activeTool !== 'rangeCalculator') {
       this.setState({ activeTool: 'rangeCalculator' }, showDrawer)
@@ -90,7 +91,8 @@ export class App extends Component {
   
   render() {
     const { activeTool } = this.state
-    const { DrawerLayout, Drawer: Controller } = workspace 
+    const { runtime } = this.props
+    const { DrawerLayout, Drawer: Controller } = runtime.workspace 
 
     const Drawer = (props) => 
       <Controller {...props}>

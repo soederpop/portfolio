@@ -17,7 +17,7 @@ const browsers = [
 ]
 
 const plugins = [
-  !isWebBuild && 'babel-plugin-require-context-hook',
+  'babel-plugin-require-context-hook',
   ['@babel/plugin-proposal-decorators', { legacy: true }],
   '@babel/plugin-proposal-class-properties',
   '@babel/plugin-proposal-export-namespace-from',
@@ -77,14 +77,9 @@ module.exports = () => ({
     '@babel/react',
   ],
   plugins,
-  /*
   env: {
     development: {
       plugins: ['react-hot-loader/babel'],
     },
-    test: {
-      plugins: [['istanbul', { include: ['src'] }]],
-    },
-  },
-  */
+  }
 })

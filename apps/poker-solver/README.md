@@ -1,6 +1,6 @@
 # Poker
 
-This repo can run a game of Texas Holdem poker, played by computer actors who can have their strategies programmed.
+Run a game of Texas Holdem poker, played by computer actors who can have their strategies programmed.
 
 A strategy is used to decide between a range of possible actions in a single poker hand. At each decision point,
 a strategy can incorporate any amount of information it can extract from the environment, to decide which action to take.
@@ -24,6 +24,31 @@ $ npm install
 
 See [Applications](#Applications) for more info about the available applications that can be run.
 
+### Development Scripts
+
+- `npm run dev` will start a development server, for both the backend API and frontend React application, which will open in your browser.
+- `npm run build` will build the library and server code for distribution, and running in production
+- `npm run play` will start the terminal based view of the game simulation. Follow the instructions on the screen for interacting with the game.
+- `npm run console` will open up a REPL
+
+## Project Structure
+
+- The [server](server) folder contains a library for powering the various poker analysis and simulation tools.
+
+- The [src](src) folder contains a React frontend application. This application is a workspace for viewing poker game simulations that are
+  running, where the different actors are carrying out their programmed strategies. It provides you with various tools for comparing the equity
+  of different hands or ranges of hands against other ranges of hands, as well as tools for browsing different board textures.
+
+- There [server/api](server/api) folder contains an express.js server for the web app to talk to.
+
+- The [src/client.js](src/client.js) module exposes a REST API client for talking to the API.
+
+- The [server/app](server/app) folder contains a React app that runs in the terminal, powered by ink.
+
+- The [test](test) folder contains some unit tests.
+
+- The [scripts](scripts) folder contains various scripts, (e.g console.js, play.js). Run any one of these scripts by typing `skypager $script` e.g. `skypager play`
+
 ## Classes
 
 ### [Range](server/Range.js)
@@ -38,7 +63,7 @@ There are 169 possible generic combinations (e.g. `AKs,AKo,AA` ) and 1326 possib
 
 Each combination is represented as an array of cards with attributes.
 
-```
+```javascript
 [ { suit: 20, rank: 1, name: '3c' },
   { suit: 20, rank: 0, name: '2c' },
   toJSON: [Function: toJSON],
@@ -74,7 +99,7 @@ These attributes can be used to match combinations against common hand range not
 Or combine some of of the above: `22-99,KTs,AKo,56s`
 
 ```javascript
-import { Range } from "@soederpop/poker";
+import { Range } from "pokurr";
 const range = new Range(`22-99,KTs+,QTs+`);
 ```
 

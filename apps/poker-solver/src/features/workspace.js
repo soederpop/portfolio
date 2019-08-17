@@ -1,6 +1,6 @@
 import Drawer from '../components/Drawer'
 import DrawerLayout from '../components/DrawerLayout'
-import runtime, { Feature } from '@skypager/runtime'
+import { Feature } from '@skypager/runtime'
 
 /**
  * The Workspace feature manages the state of the
@@ -13,7 +13,7 @@ import runtime, { Feature } from '@skypager/runtime'
  * which allows for Drawer dom elements to be inserted at the top level, but be controlled
  * by screens further down the tree.
  */
-export class Workspace extends Feature {
+export default class Workspace extends Feature {
   static shortcut = 'workspace'
 
   static isObservable = true
@@ -125,11 +125,3 @@ export class Workspace extends Feature {
     this.observeDrawers()
   }
 }
-
-runtime.features.register('workspace', () => Workspace)
-
-const workspace = runtime.feature('workspace', runtime.get('settings.workspace', {}))
-
-workspace.enable()
-
-export default workspace 

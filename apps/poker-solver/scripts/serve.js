@@ -1,4 +1,7 @@
-require('babel-plugin-require-context-hook/register')()
+if(process.env.NODE_ENV === 'development') {
+  require('@babel/register')()
+  require('babel-plugin-require-context-hook/register')()
+}
 
 const runtime = require('../runtime')
 

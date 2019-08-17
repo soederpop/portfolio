@@ -1,14 +1,13 @@
-const loadSource = !!(
-    process.env.NODE_ENV === 'test' ||
-    process.argv.indexOf('console') > -1 ||
-    process.argv.indexOf('--dev') > -1
-)
-
 const runtime = require('@skypager/node')
+
+const loadSource = process.env.NODE_ENV !== 'production'
 
 if (loadSource) {
   require('@babel/register')()
   require('babel-plugin-require-context-hook/register')()
+} else {
+  console.log(process.argv)
+  process.exit(0)
 }
 
 const framework = loadSource

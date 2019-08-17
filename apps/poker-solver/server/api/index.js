@@ -20,7 +20,7 @@ export default class AppServer extends Server {
    * based on the user's cookies.
    */
   get history() {
-    return true;
+    return !this.options.hot
   }
 
   /**
@@ -63,6 +63,111 @@ export default class AppServer extends Server {
    */
   async appDidMount(app) {
     await this.runtime.fileDb.load()
+
+    if (this.runtime.isDevelopment) {
+      setupDevelopment.call(this, app)
+    }
     return app
   }
+}
+
+function setupDevelopment(app, options = {}) {
+  const { runtime } = this
+  const webpack = require("webpack");
+  const devMiddleware = require("webpack-dev-middleware");
+  const hotMiddleware = require("webpack-hot-middleware");
+  const config = require("@skypager/webpack/config/webpack.config")(
+    "development"
+  );
+
+  Object.assign(config, {
+    entry: {
+      app: [runtime.resolve("src", "launch.js")],
+    },
+    node: {
+      process: "mock"
+    },
+    externals: [
+      {
+        react: "global React",
+        "react-dom": "global ReactDOM",
+        "react-router-dom": "global ReactRouterDOM",
+        "semantic-ui-react": "global semanticUIReact",
+        "prop-types": "global PropTypes",
+        "@skypager/web": "global skypager"
+      }
+    ]
+  }) 
+
+  this.setupDevelopmentMiddlewares({
+    ...options,
+    webpack,
+    config,
+    devMiddleware,
+    hotMiddleware,
+    hot: !!(options.hot || this.options.hot)
+  });
+
+  return app;
+}
+
+function _setupDevelopment(app) {
+  const { runtime } = this;
+  const { hot } = this.options;
+  const webpack = require("webpack");
+  const merge = require("webpack-merge");
+  const devMiddleware = require("webpack-dev-middleware");
+  const hotMiddleware = require("webpack-hot-middleware");
+  const config = merge(
+    require("@skypager/webpack/config/webpack.config")("development"),
+    {
+      node: {
+        process: "mock"
+      },
+      externals: [
+        {
+          react: "global React",
+          "react-dom": "global ReactDOM",
+          "react-router-dom": "global ReactRouterDOM",
+          "semantic-ui-react": "global semanticUIReact",
+          "prop-types": "global PropTypes",
+          "@skypager/web": "global skypager"
+        }
+      ]
+    }
+  );
+
+  config.entry[1] =
+    "webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000";
+
+  const compiler = webpack(config);
+  const middleware = devMiddleware(compiler, {
+    noInfo: true,
+    publicPath: config.output.publicPath
+  });
+
+  app.use(middleware);
+
+  if (hot !== false) {
+    app.use(
+      hotMiddleware(compiler, {
+        path: "/__webpack_hmr"
+      })
+    );
+  }
+
+  app.get("/*", (req, res) => {
+    middleware.fileSystem.readFile(
+      runtime.pathUtils.resolve(compiler.outputPath, "index.html"),
+      (err, file) => {
+        if (err) {
+          res.sendStatus(404);
+        } else {
+          res.send(file.toString());
+        }
+      }
+    );
+  });
+
+  return app;
 }

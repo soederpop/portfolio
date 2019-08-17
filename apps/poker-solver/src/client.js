@@ -2,7 +2,7 @@ import runtime from "@skypager/web";
 
 const baseURL = runtime.get(
   "settings.client.baseURL",
-  runtime.get("argv.baseUrl", `http://localhost:3000`)
+  runtime.get("argv.baseUrl", `http://localhost:3000/api`)
 );
 
 export const FLOP_FILTERS = {

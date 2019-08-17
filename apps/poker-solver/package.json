@@ -1,17 +1,25 @@
 {
-  "name": "@soederpop/poker-solver",
+  "name": "pokurr",
   "version": "1.0.0",
-  "description": "### Can convert range annotations",
+  "description": "a tool for poker simulation and analysis",
   "main": "index.js",
   "scripts": {
+    "console": "skypager console",
+    "start": "skypager serve",
+    "start:dev": "skypager serve --dev",
     "build": "BUILD_ENV=build babel -d lib server",
     "play": "BUILD_ENV=build skypager play --dev --babel",
     "build:webapp": "BUILD_ENV=build-web skypager build",
-    "dev:webapp": "BUILD_ENV=build-web skypager start"
+    "dev": "NODE_ENV=development skypager serve --hot --open"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "bin": "./pokurr",
+  "keywords": [
+    "poker",
+    "texas holdem",
+    "range equity calculator"
+  ],
+  "author": "Jon Soeder <jon@chicago.com>",
+  "license": "MIT",
   "skypager": {
     "webpacks": {
       "build": "webpack.config.js",
