@@ -12,7 +12,9 @@
     "build:webapp": "BUILD_ENV=build-web skypager build",
     "dev": "NODE_ENV=development skypager serve --hot --open"
   },
-  "bin": "./pokurr",
+  "bin": {
+    "pokurr": "./pokurr.js"
+  },
   "keywords": [
     "poker",
     "texas holdem",
