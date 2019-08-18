@@ -105,6 +105,19 @@ export const SKLANKSY_RANGES = {
 */
 
 /** 
+ * @typedef {Array<Array<StartingHandCombination>} EquityMatchup
+*/
+
+/** 
+ * @typedef {Object} EquityCalculator
+ * @property {String} board
+ * @property {Array<Range>} ranges
+ * @property {Array<String>} hashes 
+ * @property {Array<EquityMatchup} matchups
+ * @property {Function} run
+*/
+
+/** 
  * The Range class represents a selection of starting poker hands,
  * which are combinations of two cards with different ranks and suits.
 */
@@ -300,6 +313,20 @@ export default class Range {
   
   /** 
    * Creates equity calculators for comparing one range to another.
+   * 
+   * In order to avoid wasteful comparisons between duplicate matchups, we select only the distinct matchups. 
+   * AhKh vs QcQs is going to be the same as AsKs vs QdQc, so there's no need to waste all the time figuring that out.
+   * 
+   * We also cache the results of the comparison by using the unique hash of each range, and any dead cards on board. 
+   * 
+   * For example, comparing all of the sklansky ranges to one another can be cached  so that subsequent comparisons can
+   * happen much more quickly.
+   * 
+   * @param {Range} anotherRange
+   * @param {Object} options
+   * @param {Boolean} [reduce=true] only use the distinct matchups
+   * @param {String} [board=''] cards already on the board
+   * @param {Number} [iterations=50000] how many iterations to go through? higher iterations = more precision but more time
   */
   createCalculators(anotherRange, { reduce = true, board = '', iterations = 50000 } = {}) {
     // need to exclude cards which are on the board
@@ -347,6 +374,18 @@ export default class Range {
     }
   }
 
+  /** 
+   * Given another range, generate all of the possible combinations of match ups between 
+   * the hands in that range and the hands in our range.  You can include certain cards
+   * on the board.
+   * 
+   * @param {Range} anotherRange
+   * @param {Object} options
+   * @param {Boolean} [reduce=true] only use the distinct matchups
+   * @param {String} [board=''] cards already on the board
+   * @param {Number} [iterations=50000] how many iterations to go through? higher iterations = more precision but more time
+   * @returns {EquityMatchup} 
+  */
   generateMatchups(anotherRange, { reduce = true, board = '' } = {}) {
     const { combos } = this
     const boardCards = chunk(board.split(''), 2).map(i => i.join(''))
@@ -395,6 +434,13 @@ export default class Range {
     })
   }
 
+  /** 
+   * Gets all of the combinations grouped by their normalized name (e.g. AKs = 4 combos) 
+   * excluding any combinations which are not possible due to any "dead cards" 
+   * 
+   * @param {Array<CardName>} [deadCards=[]]
+   * @returns {Object<NormalizedComboName,Array<Combination>>}
+  */
   normalizedCombosExcluding(deadCards = []) {
     return this.chain
       .get('normalizedCombos')
@@ -421,6 +467,10 @@ export default class Range {
     return lodash.chain(this)
   }
 
+  /** 
+   * Provides access to lodash chains for doing easy map / filter / reduce / sum / group / avg etc
+   * starting with any of the combos, flops, turns, or river data.
+  */
   static get chains() {
     return {
       combos: Range.chain.get('combos'),
@@ -441,54 +491,99 @@ export default class Range {
     )
   }
 
+  /** 
+   * The names of all the combinations of hands.
+   * @type {Array<ComboName>}
+  */
   static get all() {
     return Array
       .from(this.combosMap.keys())
   }
 
+  /** 
+   * The data representation of every hand combination.
+   * e.g. { name: "AhKh", normalized: "AKs", suited: true, rank: 12, kicker: 11, connected: true }
+   * @type {Array<Combination>}
+  */
   static get combos() {
     const c = Array.from(this.combosMap.values())
     return sortBy(c, 'showdown') 
   }
 
+  /** 
+   * Get every combination of hands where both suits are equal.
+  */
   static get suited() {
     return this.combos
       .filter(i => i[0].suit === i[1].suit)
   }
 
+  /** 
+   * Get every combination of hands where both suits are equal, and their hand ranks
+   * are next to each other.
+   * @type {Array<Combination>}
+  */
   static get suitedConnectors() {
     return this.suited
       .filter(i => Math.abs(i[1].rank - i[0].rank) === 1)
   }
 
+  /** 
+   * Get every combination of hands where both suits are equal, and their hand ranks
+   * are one away from each other.
+   * @type {Array<Combination>}
+  */
   static get suitedOneGap() {
     return this.suited
       .filter(i => Math.abs(i[1].rank - i[0].rank) === 2)
   }
 
+  /** 
+   * Get every combination of hands where both suits are equal, and their hand ranks
+   * are two away from each other.
+   * @type {Array<Combination>}
+  */
   static get suitedTwoGap() {
     return this.suited
       .filter(i => Math.abs(i[1].rank - i[0].rank) === 3)
   } 
 
+  /** 
+   * Get every combination of hands where both suits are equal, and their hand ranks
+   * are three away from each other.
+   * @type {Array<Combination>}
+  */
   static get suitedThreeGap() {
     return this.suited
       .filter(i => Math.abs(i[1].rank - i[0].rank) === 4)
   } 
 
+  /** 
+   * Get all of the combinations of paired hands.
+   * @type {Array<Combination>}
+  */
   static get pocketPairs() {
     return this.combos
       .filter(i => i[0].rank === i[1].rank)
   }
 
+  /** 
+   * @type {Array<CardName>}
+  */
   static get cardNames() {
     return this.cards.map(c => c.name)
   }
 
+  /** 
+   * @type {Array<ComboName>}
+  */
   static get comboNames() {
     return this.combos.map(c => c.name)
   } 
 
+  /** 
+   * Returns every normalized combo name in a 13x13 array grid, sorted by card rank 
+  */
   static asGrid() {
     const ranks = [ACE, KING, QUEEN, JACK, TEN, NINE, EIGHT, SEVEN, SIX, FIVE, FOUR, THREE, TWO]  
 
@@ -512,6 +607,15 @@ export default class Range {
     return grid 
   } 
 
+  /** 
+   * Each of the possible starting hand combinations have been run through PokerStove
+   * and published as a matrix showing each starting hand combination and its equity against
+   * a certain number of opponents.  This data is cached in this project, along with each combo.
+   * 
+   * We can query the hand combinations to rank them based on how well they do given any number of opponents
+   * 
+   * @returns {Array<ComboName>}
+  */
   static strongestHands(percent, numberOfOpponents = 9) {
     const limit = Math.floor(169 * (percent / 100))
 
@@ -524,6 +628,10 @@ export default class Range {
       .value()
   }
 
+  /** 
+   * Returns info about the hand combinations grouped by their normalized name.
+   * @returns {Array<ComboName>}
+  */
   static get normalizedComboInfo() {
     return this.chains.combos
     .groupBy('normalized')
@@ -541,6 +649,10 @@ export default class Range {
       .value()
   }
 
+  /** 
+   * Displays just the average equity vs a number of opponents for each
+   * normalized combo (e.g. { "AKs" => [x,y,z]})
+  */
   static get strengthChart() {
     return this.chains
       .combos
@@ -549,6 +661,13 @@ export default class Range {
       .value()
   }
 
+  /** 
+   * Perform the enumeration that generates every possible combination of 2 cards.
+   * 
+   * This output gets memoized so calling it a 2nd time is "free"
+   * 
+   * @private
+  */
   static get combosMap() {
     const cards = this.cards
 
@@ -668,6 +787,13 @@ export default class Range {
     return Array.from(this.riversMap.values())
   }
 
+  /** 
+   * Perform the enumeration that generates every possible combination of 3 cards.
+   * 
+   * This output gets memoized so calling it a 2nd time is "free"
+   * 
+   * @private
+  */
   static get flopsMap() {
     const cards = this.cards
 
@@ -815,6 +941,13 @@ export default class Range {
     return flopsMap 
   }
 
+  /** 
+   * Perform the very expensive, enumeration that generates every possible combination of 4 cards.
+   * 
+   * This output gets memoized so calling it a 2nd time is "free"
+   * 
+   * @private
+  */
   static get turnsMap() {
     const cards = this.cards
 
@@ -860,7 +993,13 @@ export default class Range {
     return turnsMap 
   }
 
-
+  /** 
+   * Perform the very expensive, enumeration that generates every possible combination of 5 cards.
+   * 
+   * This output gets memoized so calling it a 2nd time is "free".  This takes up a lot of memory.
+   * 
+   * @private
+  */
   static get riversMap() {
     const cards = this.cards
 
